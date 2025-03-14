@@ -19,7 +19,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 800px; /* Prevents it from being too wide on large screens */
+ 
 }
 
 /* Auth Container */

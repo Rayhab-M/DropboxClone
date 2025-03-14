@@ -1,25 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import { uploadData } from "@aws-amplify/storage"; // ✅ Correct import
+import { uploadData, list, getUrl } from "@aws-amplify/storage"; // ✅ Import getUrl to fetch file content
 import { Button, CircularProgress } from "@mui/material";
-import { Amplify } from "aws-amplify"; // ✅ Ensure Amplify is used
-import awsExports from "./aws-exports"; // ✅ Ensure AWS config is imported
+import { Amplify } from "aws-amplify";
+import awsExports from "./aws-exports";
 import "./App.css";
 
-Amplify.configure(awsExports); // ✅ Properly configure Amplify
+Amplify.configure(awsExports);
 
 function App({ signOut, user }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileList, setFileList] = useState([]);
+  const [fileContent, setFileContent] = useState(""); // ✅ State for file content
+  const [viewingFile, setViewingFile] = useState(""); // ✅ Track which file is being viewed
 
-  // Handle file selection
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  // ✅ Fetch list of files
+  const fetchFiles = async () => {
+    try {
+      const { items } = await list({ accessLevel: "public" });
+      setFileList(items);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    }
+  };
+
+  // ✅ Handle file selection
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
   };
 
-  // Handle file upload to S3
+  // ✅ Upload file to S3
   const handleFileUpload = async () => {
     if (!selectedFile) {
       alert("Please select a file first.");
@@ -29,26 +46,53 @@ function App({ signOut, user }) {
     setUploading(true);
 
     try {
-      // ✅ Use uploadData instead of Storage.put()
-      const result = await uploadData({
-        key: selectedFile.name, // File name as key
-        data: selectedFile, // Actual file data
+      await uploadData({
+        key: selectedFile.name,
+        data: selectedFile,
         options: {
-          accessLevel: "public", // Set access level
-          contentType: selectedFile.type, // Preserve file type
+          accessLevel: "public",
+          contentType: selectedFile.type,
           progressCallback: (progress) => {
             setUploadProgress(Math.round((progress.loaded / progress.total) * 100));
           },
         },
       });
 
-      console.log("File uploaded successfully:", result);
       alert("File uploaded successfully!");
+      fetchFiles(); // Refresh file list after upload
     } catch (error) {
-      console.log("Error uploading file:", error);
+      console.error("Error uploading file:", error);
       alert("Error uploading file: " + error.message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  // ✅ View file content dynamically
+  const handleViewFile = async (fileKey) => {
+    try {
+      setViewingFile(fileKey); // Track which file is being viewed
+      const url = await getUrl({ key: fileKey, options: { accessLevel: "public" } });
+
+      // Fetch content of the file
+      const response = await fetch(url.url);
+      const text = await response.text();
+      setFileContent(text);
+    } catch (error) {
+      console.error("Error fetching file content:", error);
+      alert("Error viewing file content.");
+    }
+  };
+
+  // ✅ Delete file
+  const handleDeleteFile = async (fileKey) => {
+    try {
+      await delete({ key: fileKey, options: { accessLevel: "public" } });
+      alert("File deleted successfully!");
+      fetchFiles(); // Refresh file list after deletion
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Error deleting file.");
     }
   };
 
@@ -72,50 +116,43 @@ function App({ signOut, user }) {
 
           {uploading && <p>Uploading... {uploadProgress}%</p>}
         </div>
-      </div>
 
-      <footer>
-        <p>
-          Need help?{" "}
-          <button
-            onClick={() => alert("Redirect to Contact Us page or show modal")}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#0061ff", // Dropbox blue
-              cursor: "pointer",
-              textDecoration: "underline",
-            }}
-          >
-            Contact us
-          </button>
-        </p>
-      </footer>
+        <h2>Uploaded Files</h2>
+        <ul>
+          {fileList.map((file) => (
+            <li key={file.key}>
+              <button
+                onClick={() => handleViewFile(file.key)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#0061ff",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                  fontSize: "inherit",
+                }}
+              >
+                {file.key}
+              </button>
+              &nbsp;
+              <Button onClick={() => handleDeleteFile(file.key)} color="error" size="small">
+                Delete
+              </Button>
+            </li>
+          ))}
+        </ul>
+
+        {viewingFile && (
+          <div className="file-content">
+            <h3>Viewing: {viewingFile}</h3>
+            <pre>{fileContent}</pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// Custom Theme for AWS Amplify UI
-const customTheme = {
-  name: "DropboxTheme",
-  tokens: {
-    colors: {
-      brand: {
-        primary: {
-          10: "#eaf2ff",
-          80: "#0061ff", // Dropbox blue
-          90: "#004ecc", // Darker blue on hover
-        },
-      },
-    },
-    components: {
-      button: {
-        borderRadius: { value: "8px" },
-        fontWeight: { value: "bold" },
-      },
-    },
-  },
-};
-
-// Export with Custom Theme Applied
-export default withAuthenticator(App, { theme: customTheme });
+// Export with AWS Authentication
+export default withAuthenticator(App);
