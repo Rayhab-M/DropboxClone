@@ -1,38 +1,105 @@
-.App {
-  text-align: center;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+body {
+  background: #f7f9fc;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Aligns content towards the top */
   min-height: 100vh;
+  padding: 2rem; /* Adds spacing on the sides */
+}
+
+.App {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 800px; /* Prevents it from being too wide on large screens */
+}
+
+/* Auth Container */
+.auth-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px; /* Slightly wider */
+  text-align: center;
+  margin-bottom: 2rem; /* Adds space between elements */
+}
+
+/* Auth Form Styling */
+.amplify-authenticator {
+  background: #f7f9fc !important;
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  height: auto; /* Allows content to expand */
+  padding: 2rem 0;
 }
 
-.App-link {
-  color: #61dafb;
+/* Buttons */
+.amplify-button--primary {
+  background: #0061ff !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  padding: 10px 20px !important;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.amplify-button--primary:hover {
+  background: #004ecc !important;
+}
+
+/* Input Fields */
+.amplify-textfield {
+  width: 100% !important;
+  border-radius: 8px !important;
+  margin-bottom: 1rem !important;
+}
+
+.amplify-textfield__wrapper {
+  border-radius: 8px !important;
+}
+
+/* File Upload Section */
+.file-upload-section {
+  width: 100%;
+  max-width: 450px;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem; /* Adds spacing */
+  text-align: center;
+}
+
+/* Footer */
+footer {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+footer button {
+  background: none;
+  border: none;
+  color: #0061ff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .auth-container,
+  .file-upload-section {
+    width: 90%;
+    max-width: 100%;
+    padding: 1.5rem;
   }
 }
