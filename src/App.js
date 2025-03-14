@@ -1,42 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import { uploadData, list, getUrl } from "@aws-amplify/storage"; // ✅ Import getUrl to fetch file content
-import { Button, CircularProgress } from "@mui/material";
+import { uploadData, list, getUrl, remove } from "@aws-amplify/storage";
+import { fetchUserAttributes } from "@aws-amplify/auth"; 
+import { Button, CircularProgress, TextField } from "@mui/material";
 import { Amplify } from "aws-amplify";
 import awsExports from "./aws-exports";
 import "./App.css";
 
 Amplify.configure(awsExports);
 
-function App({ signOut, user }) {
+function App({ signOut }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [setUploadProgress] = useState(0);
   const [fileList, setFileList] = useState([]);
-  const [fileContent, setFileContent] = useState(""); // ✅ State for file content
-  const [viewingFile, setViewingFile] = useState(""); // ✅ Track which file is being viewed
-
+  const [fileContent, setFileContent] = useState("");
+  const [viewingFile, setViewingFile] = useState(null);
+  const [username, setUsername] = useState("User");
+  const [folderPath, setFolderPath] = useState("");
+  
   useEffect(() => {
     fetchFiles();
+    fetchUsername();
   }, []);
 
-  // ✅ Fetch list of files
-  const fetchFiles = async () => {
+  const fetchFiles = async (folder = "") => {
     try {
-      const { items } = await list({ accessLevel: "public" });
+      const { items } = await list({ accessLevel: "public", prefix: folder });
       setFileList(items);
     } catch (error) {
       console.error("Error fetching files:", error);
     }
   };
 
-  // ✅ Handle file selection
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
+  const fetchUsername = async () => {
+    try {
+      const attributes = await fetchUserAttributes();
+      setUsername(attributes?.email || attributes?.preferred_username || "User");
+    } catch (error) {
+      console.error("Error fetching user attributes:", error);
+      setUsername("User");
+    }
   };
 
-  // ✅ Upload file to S3
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
   const handleFileUpload = async () => {
     if (!selectedFile) {
       alert("Please select a file first.");
@@ -44,10 +54,12 @@ function App({ signOut, user }) {
     }
 
     setUploading(true);
+    const timestamp = new Date().toISOString();
+    const fileKey = `${folderPath}${selectedFile.name}_${timestamp}`;
 
     try {
       await uploadData({
-        key: selectedFile.name,
+        key: fileKey,
         data: selectedFile,
         options: {
           accessLevel: "public",
@@ -59,100 +71,98 @@ function App({ signOut, user }) {
       });
 
       alert("File uploaded successfully!");
-      fetchFiles(); // Refresh file list after upload
+      fetchFiles(folderPath);
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Error uploading file: " + error.message);
     } finally {
       setUploading(false);
     }
   };
 
-  // ✅ View file content dynamically
   const handleViewFile = async (fileKey) => {
     try {
-      setViewingFile(fileKey); // Track which file is being viewed
+      setViewingFile(fileKey);
       const url = await getUrl({ key: fileKey, options: { accessLevel: "public" } });
-
-      // Fetch content of the file
-      const response = await fetch(url.url);
-      const text = await response.text();
-      setFileContent(text);
+      if (fileKey.match(/\.(jpg|jpeg|png|gif)$/)) {
+        setFileContent(<img src={url.url} alt={fileKey} style={{ maxWidth: "100%" }} />);
+      } else {
+        const response = await fetch(url.url);
+        const text = await response.text();
+        setFileContent(<pre>{text}</pre>);
+      }
     } catch (error) {
       console.error("Error fetching file content:", error);
-      alert("Error viewing file content.");
     }
   };
 
-  // ✅ Delete file
   const handleDeleteFile = async (fileKey) => {
     try {
-      await delete({ key: fileKey, options: { accessLevel: "public" } });
+      await remove({ key: fileKey, options: { accessLevel: "public" } });
       alert("File deleted successfully!");
-      fetchFiles(); // Refresh file list after deletion
+      fetchFiles(folderPath);
     } catch (error) {
       console.error("Error deleting file:", error);
-      alert("Error deleting file.");
+    }
+  };
+
+  const generateSharedLink = async (fileKey) => {
+    try {
+      const url = await getUrl({ key: fileKey, options: { accessLevel: "public", expiresIn: 3600 } });
+      prompt("Copy this shareable link:", url.url);
+    } catch (error) {
+      console.error("Error generating link:", error);
     }
   };
 
   return (
     <div className="App">
-      <div className="auth-container">
-        <h1>Welcome to File Sync</h1>
-        <p className="welcome-text">Upload and sync files seamlessly!</p>
+      <h1>My Dropbox App</h1>
+      <h3>Welcome, {username}!</h3>
+      <Button onClick={signOut} variant="contained" color="secondary">
+        Sign Out
+      </Button>
 
-        <h3>Welcome, {user?.username || "User"}!</h3>
+      <TextField
+        label="Folder Path"
+        variant="outlined"
+        fullWidth
+        value={folderPath}
+        onChange={(e) => setFolderPath(e.target.value)}
+      />
 
-        <Button onClick={signOut} variant="contained" color="secondary">
-          Sign Out
+      <div className="file-upload-section">
+        <input type="file" onChange={handleFileChange} disabled={uploading} />
+        <Button onClick={handleFileUpload} variant="contained" color="primary" disabled={uploading}>
+          {uploading ? <CircularProgress size={24} /> : "Upload File"}
         </Button>
-
-        <div className="file-upload-section">
-          <input type="file" onChange={handleFileChange} disabled={uploading} />
-          <Button onClick={handleFileUpload} variant="contained" color="primary" disabled={uploading}>
-            {uploading ? <CircularProgress size={24} /> : "Upload File"}
-          </Button>
-
-          {uploading && <p>Uploading... {uploadProgress}%</p>}
-        </div>
-
-        <h2>Uploaded Files</h2>
-        <ul>
-          {fileList.map((file) => (
-            <li key={file.key}>
-              <button
-                onClick={() => handleViewFile(file.key)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#0061ff",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                  padding: 0,
-                  fontSize: "inherit",
-                }}
-              >
-                {file.key}
-              </button>
-              &nbsp;
-              <Button onClick={() => handleDeleteFile(file.key)} color="error" size="small">
-                Delete
-              </Button>
-            </li>
-          ))}
-        </ul>
-
-        {viewingFile && (
-          <div className="file-content">
-            <h3>Viewing: {viewingFile}</h3>
-            <pre>{fileContent}</pre>
-          </div>
-        )}
       </div>
+
+      {!viewingFile ? (
+        <>
+          <h2>Uploaded Files</h2>
+          <ul>
+            {fileList.map((file) => (
+              <li key={file.key}>
+                <button onClick={() => handleViewFile(file.key)}>{file.key}</button>
+                <Button onClick={() => handleDeleteFile(file.key)} color="error" size="small">
+                  Delete
+                </Button>
+                <Button onClick={() => generateSharedLink(file.key)} size="small">Share</Button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div className="file-content">
+          <h3>Viewing: {viewingFile}</h3>
+          {fileContent}
+          <Button onClick={() => setViewingFile(null)} variant="contained" color="primary">
+            Back
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
-// Export with AWS Authentication
 export default withAuthenticator(App);

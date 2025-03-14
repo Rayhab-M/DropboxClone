@@ -1,85 +1,54 @@
-* {
+* { 
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Arial", sans-serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: #f7f9fc;
+  background: #f4f7fa; 
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Aligns content towards the top */
+  align-items: center; 
   min-height: 100vh;
-  padding: 2rem; /* Adds spacing on the sides */
+  padding: 2rem;
 }
 
 .App {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   width: 100%;
- 
+  max-width: 600px; 
+  min-height: 90vh; 
 }
 
-/* Auth Container */
+
 .auth-container {
   background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem; 
+  border-radius: 8px; 
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); 
   width: 100%;
-  max-width: 450px; /* Slightly wider */
+  max-width: 500px;
   text-align: center;
-  margin-bottom: 2rem; /* Adds space between elements */
+  margin-bottom: 2rem;
 }
 
-/* Auth Form Styling */
-.amplify-authenticator {
-  background: #f7f9fc !important;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: auto; /* Allows content to expand */
-  padding: 2rem 0;
-}
 
-/* Buttons */
-.amplify-button--primary {
-  background: #0061ff !important;
-  border-radius: 8px !important;
-  font-weight: bold !important;
-  padding: 10px 20px !important;
-}
-
-.amplify-button--primary:hover {
-  background: #004ecc !important;
-}
-
-/* Input Fields */
-.amplify-textfield {
-  width: 100% !important;
-  border-radius: 8px !important;
-  margin-bottom: 1rem !important;
-}
-
-.amplify-textfield__wrapper {
-  border-radius: 8px !important;
-}
-
-/* File Upload Section */
 .file-upload-section {
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
   background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem; /* Adds spacing */
+  padding: 2rem;
+  border-radius: 8px; 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08); 
+  margin-bottom: 2rem;
   text-align: center;
 }
 
-/* Footer */
+
 footer {
   margin-top: 2rem;
   text-align: center;
@@ -88,18 +57,60 @@ footer {
 footer button {
   background: none;
   border: none;
-  color: #0061ff;
+  color: #0061ff; 
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
+  transition: color 0.3s; 
 }
 
-/* Responsive Design */
+footer button:hover {
+  color: #0052cc; 
+}
+
+
 @media (max-width: 600px) {
+  .App {
+    max-width: 100%;
+    min-width: 320px; 
+  }
+
   .auth-container,
   .file-upload-section {
     width: 90%;
     max-width: 100%;
     padding: 1.5rem;
   }
+}
+
+
+input[type="text"],
+input[type="password"],
+button {
+  width: 100%;
+  padding: 12px;
+  margin: 0.8rem 0;
+  border-radius: 4px; 
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+button:hover {
+  border-color: #0061ff; 
+}
+
+button {
+  background-color: #0061ff;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0052cc;
 }
