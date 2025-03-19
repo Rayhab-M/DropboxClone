@@ -54,7 +54,7 @@ Generate & Copy File Links
 Click Copy Link to generate a shareable link, when you click on the link it downloads the file for you to preview and accesss the file
 Paste the link in a browser to access the file.
 
-Here is the hosted link. The application was hosted on netlify
+Here is the hosted link. The application was hosted on netlify https://raydropsalaha03.netlify.app/
 
 ```
 ./my_project argument1 argument2
