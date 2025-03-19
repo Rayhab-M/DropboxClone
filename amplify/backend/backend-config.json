@@ -1,6 +1,6 @@
 {
   "auth": {
-    "mydropbox8a3d547c": {
+    "mydropboxappba05d968": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
@@ -28,7 +28,7 @@
     }
   },
   "storage": {
-    "s34966d7f6": {
+    "s3bfef7dc9": {
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "S3"
